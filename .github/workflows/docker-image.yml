@@ -1,0 +1,37 @@
+name: Build Docker Image
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+
+    env: 
+      ENVIRONMENT: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v1
+
+      - name: Get repository name
+        id: repo_name
+        run: echo "::set-output name=repo_name::$(basename $GITHUB_REPOSITORY)"
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ steps.repo_name.outputs.repo_name }}:latest .
+        working-directory: .
+
+      - name: Log in to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker image
+        run: |
+          docker tag ${{ steps.repo_name.outputs.repo_name }}:latest ${{ secrets.DOCKER_USERNAME }}/${{ steps.repo_name.outputs.repo_name }}:latest
+          docker push ${{ secrets.DOCKER_USERNAME}}/${{ steps.repo_name.outputs.repo_name }}:latest
