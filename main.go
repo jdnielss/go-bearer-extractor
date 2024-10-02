@@ -61,19 +61,6 @@ func generateMarkdownTable(report SecurityReport, url string, namespace string, 
 				finding.CweIDs[0], finding.Title, finding.Filename, finding.LineNumber, finding.Filename, fullLink, finding.DocumentationURL))
 		}
 
-		// Low severity findings
-		buffer.WriteString("\n### :warning: Low Severity Findings\n\n")
-		buffer.WriteString("| CWE | Title | Filename | Line Number | File | Documentation |\n")
-		buffer.WriteString("|-----|-------|----------|-------------|---------------|---------------|\n")
-		for _, finding := range report.Low {
-			// Concatenate URL, namespace, and the filename
-			fullLink := fmt.Sprintf("%s/%s/-/blob/%s/%s#L%d-L%d", url, namespace, branch, finding.Filename, finding.Sources.Start, finding.Sources.End)
-
-			// Use the fullLink in the markdown formatting
-			buffer.WriteString(fmt.Sprintf("| %s | %s | %s | %d | [%s](%s) | [Documentation](%s) |\n",
-				finding.CweIDs[0], finding.Title, finding.Filename, finding.LineNumber, finding.Filename, fullLink, finding.DocumentationURL))
-		}
-
 		return buffer.String()
 	}
 }
