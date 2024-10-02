@@ -158,6 +158,6 @@ func main() {
 	// Send the Markdown table as a note to GitLab
 	err = sendGitLabNote(*url, markdown, *projectID, *mergeRequestID, *gitlabToken)
 	if err != nil {
-		log.Fatalf("Failed to send note to GitLab")
+		log.Fatalf("Failed to send note to GitLab: %v", err)
 	}
 }
