@@ -82,38 +82,50 @@ func sendGitLabNote(git, markdown string, projectID, mergeRequestID int, token s
 	// GitLab API URL
 	url := fmt.Sprintf("%s/api/v4/projects/%d/merge_requests/%d/notes", git, projectID, mergeRequestID)
 
-	// Create the request body, using %q to escape markdown content
-	reqBody := []byte(fmt.Sprintf(`{"body": %q}`, markdown))
+	// Maximum note size for GitLab (65536 characters)
+	const maxNoteSize = 65536
 
-	// Ensure that the markdown content isn't too large for GitLab's API
-	if len(reqBody) > 65536 {
-		return fmt.Errorf("markdown content exceeds GitLab's maximum note size of 65536 characters")
+	// Split the markdown into chunks if it exceeds the maximum note size
+	for len(markdown) > 0 {
+		// Determine the chunk size (either the max size or the remaining size if smaller)
+		chunkSize := len(markdown)
+		if chunkSize > maxNoteSize {
+			chunkSize = maxNoteSize
+		}
+
+		// Create the request body for the current chunk
+		chunk := markdown[:chunkSize]
+		reqBody := []byte(fmt.Sprintf(`{"body": %q}`, chunk))
+
+		// Create a new HTTP POST request
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
+		if err != nil {
+			return fmt.Errorf("failed to create request: %w", err)
+		}
+
+		// Set required headers
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("PRIVATE-TOKEN", token)
+
+		// Execute the request
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return fmt.Errorf("failed to send request: %w", err)
+		}
+		defer resp.Body.Close()
+
+		// Check for non-2xx status codes
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			return fmt.Errorf("received non-2xx response: %d", resp.StatusCode)
+		}
+
+		log.Println("Successfully sent note chunk to GitLab")
+
+		// Move to the next chunk
+		markdown = markdown[chunkSize:]
 	}
 
-	// Create a new HTTP POST request
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Set required headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("PRIVATE-TOKEN", token)
-
-	// Execute the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Check for non-2xx status codes
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return fmt.Errorf("received non-2xx response: %d", resp.StatusCode)
-	}
-
-	log.Println("Successfully sent note to GitLab")
 	return nil
 }
 
