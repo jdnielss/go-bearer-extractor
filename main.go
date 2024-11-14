@@ -41,14 +41,11 @@ type SecurityReport struct {
 func generateMarkdownTable(report SecurityReport, url string, namespace string, branch string) string {
 	var buffer bytes.Buffer
 
-	if len(report.High) == 0 && len(report.Low) == 0 {
+	if len(report.High) == 0 {
 		buffer.WriteString("# Yuki - SECURITY REPORT :eyes: \n")
-		buffer.WriteString("![alt text](https://i.pinimg.com/564x/5f/a0/04/5fa004c77dcc99f43701294e27dd7a64.jpg)\n")
 		return buffer.String()
 	} else {
 		buffer.WriteString("# :rotating_light: Yuki - SECURITY REPORT :rotating_light: \n")
-		buffer.WriteString("![alt text](https://thoropass.com/wp-content/uploads/2023/10/828wnh.jpg)\n")
-
 		buffer.WriteString("### :rotating_light: High Severity Findings\n\n")
 		buffer.WriteString("| CWE | Title | Filename | Line Number | File | Documentation |\n")
 		buffer.WriteString("|-----|-------|----------|-------------|---------------|---------------|\n")
